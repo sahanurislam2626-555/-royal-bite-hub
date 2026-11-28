@@ -105,7 +105,11 @@ async function camOn(){try{if(!navigator.mediaDevices||!navigator.mediaDevices.g
 function snap(){const v=$('#v');if(snapped)return;if(!v||!v.videoWidth){setStat(0,'The camera is still starting. Please wait a moment and tap Capture Photo again.');return}
 snapped=1;const c=document.createElement('canvas');c.width=c.height=112;const x=c.getContext('2d'),s=Math.min(v.videoWidth,v.videoHeight);
 x.drawImage(v,(v.videoWidth-s)/2,(v.videoHeight-s)/2,s,s,0,0,112,112);
-const im=x.getImageData(0,0,112,112),d=im.data;for(let i=0;i<d.length;i+=4){const g=.3*d[i]+.59*d[i+1]+.11*d[i+2];d[i]=d[i+1]=d[i+2]=g}x.putImageData(im,0,0);
+const im=x.getImageData(0,0,112,112),d=im.data,n=d.length/4;let sum=0,sq=0,dk=0;
+for(let i=0;i<d.length;i+=4){const g=.3*d[i]+.59*d[i+1]+.11*d[i+2];d[i]=d[i+1]=d[i+2]=g;sum+=g;sq+=g*g;if(g<28)dk++}
+const mean=sum/n,sd=Math.sqrt(Math.max(0,sq/n-mean*mean));
+if(mean<40||sd<15||dk/n>.75){snapped=0;setStat(0,'Camera frame is too dark or covered. Uncover the camera and position your face clearly inside the outline to confirm your order.');return}
+x.putImageData(im,0,0);
 const p=c.toDataURL('image/jpeg',.45);
 if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
 $('#cam').innerHTML=`<img src="${p}" alt="" style="width:100%;height:100%;object-fit:cover">`+GUIDE;
